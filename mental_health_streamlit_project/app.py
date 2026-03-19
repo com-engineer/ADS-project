@@ -1,114 +1,203 @@
 import streamlit as st
 import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
 
-from modules.visualization import visualize_data
-from modules.preprocessing import preprocess_data
-from modules.model_training import train_model
-from modules.evaluation import evaluate_model
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression, LogisticRegression
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.metrics import mean_squared_error, r2_score, accuracy_score, confusion_matrix
 
-st.title("Applied Data Science Model Builder")
+st.set_page_config(layout="wide")
 
-st.sidebar.title("Navigation")
+# ---------- NAVBAR ----------
+menu = ["Upload", "EDA", "Visualization", "Preprocessing", "Model Training", "Evaluation", "Prediction"]
+choice = st.tabs(menu)
 
-menu = st.sidebar.selectbox(
-    "Select Phase",
-    [
-        "Upload Dataset",
-        "Data Understanding",
-        "Visualization",
-        "Preprocessing",
-        "Model Training",
-        "Model Evaluation"
-    ]
-)
+# ---------- UPLOAD ----------
+with choice[0]:
+    st.header("Upload Dataset")
+    file = st.file_uploader("Upload CSV", type=["csv"])
 
-# Upload dataset
-if menu == "Upload Dataset":
-
-    uploaded_file = st.file_uploader("Upload CSV Dataset", type=["csv"])
-
-    if uploaded_file is not None:
-        df = pd.read_csv(uploaded_file)
-        st.session_state["data"] = df
-
-        st.write("Dataset Uploaded Successfully")
+    if file:
+        df = pd.read_csv(file)
+        st.session_state["df"] = df
         st.write(df.head())
 
+# ---------- EDA ----------
+with choice[1]:
+    if "df" in st.session_state:
+        df = st.session_state["df"]
 
-# Data Understanding
-elif menu == "Data Understanding":
+        st.header("Exploratory Data Analysis")
 
-    if "data" in st.session_state:
-
-        df = st.session_state["data"]
-
-        st.subheader("Dataset Preview")
-        st.write(df.head())
-
-        st.subheader("Shape")
+        st.subheader("Basic Info")
         st.write(df.shape)
-
-        st.subheader("Data Types")
         st.write(df.dtypes)
 
-        st.subheader("Statistical Summary")
-        st.write(df.describe())
+        st.subheader("Statistical Measures")
 
-    else:
-        st.warning("Please upload dataset first")
+        if st.checkbox("Mean"):
+            st.write(df.mean(numeric_only=True))
 
+        if st.checkbox("Median"):
+            st.write(df.median(numeric_only=True))
 
-# Visualization
-elif menu == "Visualization":
+        if st.checkbox("Mode"):
+            st.write(df.mode().iloc[0])
 
-    if "data" in st.session_state:
-        df = st.session_state["data"]
-        visualize_data(df)
+        if st.checkbox("Standard Deviation"):
+            st.write(df.std(numeric_only=True))
 
-    else:
-        st.warning("Upload dataset first")
+        if st.checkbox("Variance"):
+            st.write(df.var(numeric_only=True))
 
+        if st.checkbox("Skewness"):
+            st.write(df.skew(numeric_only=True))
 
-# Preprocessing
-elif menu == "Preprocessing":
+# ---------- VISUALIZATION ----------
+with choice[2]:
+    if "df" in st.session_state:
+        df = st.session_state["df"]
 
-    if "data" in st.session_state:
+        st.header("Visualization")
 
-        df = st.session_state["data"]
-        processed_df = preprocess_data(df)
+        plot = st.selectbox("Select Plot",
+                            ["Histogram", "Scatter", "Boxplot", "Heatmap"])
 
-        st.session_state["processed_data"] = processed_df
+        cols = df.columns
 
-        st.write("Processed Data")
-        st.write(processed_df.head())
+        if plot == "Histogram":
+            col = st.selectbox("Select Column", cols)
+            fig, ax = plt.subplots()
+            sns.histplot(df[col], ax=ax)
+            st.pyplot(fig)
 
-    else:
-        st.warning("Upload dataset first")
+        elif plot == "Scatter":
+            x = st.selectbox("X Axis", cols)
+            y = st.selectbox("Y Axis", cols)
+            fig, ax = plt.subplots()
+            sns.scatterplot(x=df[x], y=df[y], ax=ax)
+            st.pyplot(fig)
 
+        elif plot == "Boxplot":
+            col = st.selectbox("Select Column", cols)
+            fig, ax = plt.subplots()
+            sns.boxplot(x=df[col], ax=ax)
+            st.pyplot(fig)
 
-# Model Training
-elif menu == "Model Training":
+        elif plot == "Heatmap":
+            fig, ax = plt.subplots()
+            sns.heatmap(df.corr(numeric_only=True), annot=True, ax=ax)
+            st.pyplot(fig)
 
-    if "processed_data" in st.session_state:
+# ---------- PREPROCESSING ----------
+with choice[3]:
+    if "df" in st.session_state:
+        df = st.session_state["df"].copy()
 
-        df = st.session_state["processed_data"]
+        st.header("Preprocessing")
 
-        model, X_test, y_test, y_pred = train_model(df)
+        if st.checkbox("Remove Duplicate Rows"):
+            df = df.drop_duplicates()
 
-        st.session_state["model_results"] = (X_test, y_test, y_pred)
+        if st.checkbox("Handle Missing Values (Fill Mean)"):
+            df = df.fillna(df.mean(numeric_only=True))
 
-    else:
-        st.warning("Run preprocessing first")
+        if st.checkbox("Drop ID Columns"):
+            for col in df.columns:
+                if "id" in col.lower():
+                    df = df.drop(col, axis=1)
 
+        if st.checkbox("Encode Categorical Columns"):
+            df = pd.get_dummies(df, drop_first=True)
 
-# Model Evaluation
-elif menu == "Model Evaluation":
+        st.session_state["processed"] = df
+        st.write(df.head())
 
-    if "model_results" in st.session_state:
+# ---------- MODEL TRAINING ----------
+with choice[4]:
+    if "processed" in st.session_state:
 
-        X_test, y_test, y_pred = st.session_state["model_results"]
+        df = st.session_state["processed"]
 
-        evaluate_model(y_test, y_pred)
+        st.header("Model Training")
 
-    else:
-        st.warning("Train model first")
+        target = st.selectbox("Select Target Variable", df.columns)
+
+        X = df.drop(target, axis=1)
+        y = df[target]
+
+        model_type = st.selectbox("Select Model",
+                                 ["Linear Regression", "Random Forest", "Logistic Regression"])
+
+        test_size = st.slider("Test Size", 0.1, 0.5, 0.2)
+
+        if st.button("Train Model"):
+
+            X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size)
+
+            if model_type == "Linear Regression":
+                model = LinearRegression()
+
+            elif model_type == "Random Forest":
+                model = RandomForestRegressor()
+
+            else:
+                model = LogisticRegression(max_iter=1000)
+
+            # Training progress
+            progress = st.progress(0)
+
+            for i in range(100):
+                progress.progress(i + 1)
+
+            model.fit(X_train, y_train)
+            y_pred = model.predict(X_test)
+
+            st.session_state["model"] = model
+            st.session_state["X_test"] = X_test
+            st.session_state["y_test"] = y_test
+            st.session_state["y_pred"] = y_pred
+
+            st.success("Model Trained Successfully")
+
+# ---------- EVALUATION ----------
+with choice[5]:
+    if "model" in st.session_state:
+
+        y_test = st.session_state["y_test"]
+        y_pred = st.session_state["y_pred"]
+
+        st.header("Model Evaluation")
+
+        st.write("R2 Score:", r2_score(y_test, y_pred))
+        st.write("MSE:", mean_squared_error(y_test, y_pred))
+
+        # Plot
+        fig, ax = plt.subplots()
+        ax.scatter(y_test, y_pred)
+        ax.set_xlabel("Actual")
+        ax.set_ylabel("Predicted")
+        st.pyplot(fig)
+
+# ---------- PREDICTION ----------
+with choice[6]:
+    if "model" in st.session_state:
+
+        st.header("Predict New Data")
+
+        df = st.session_state["processed"]
+        model = st.session_state["model"]
+
+        input_data = []
+
+        for col in df.columns[:-1]:
+            val = st.number_input(f"Enter {col}", value=0.0)
+            input_data.append(val)
+
+        if st.button("Predict"):
+            prediction = model.predict([input_data])
+
+            st.success(f"Predicted Output: {prediction[0]}")
