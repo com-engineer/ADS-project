@@ -5,199 +5,152 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 from sklearn.model_selection import train_test_split
-from sklearn.linear_model import LinearRegression, LogisticRegression
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.metrics import mean_squared_error, r2_score, accuracy_score, confusion_matrix
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import r2_score, mean_squared_error
 
 st.set_page_config(layout="wide")
 
+# ---------- TITLE ----------
+st.title("AI-Based Digital Wellbeing Decision Support System")
+
 # ---------- NAVBAR ----------
-menu = ["Upload", "EDA", "Visualization", "Preprocessing", "Model Training", "Evaluation", "Prediction"]
-choice = st.tabs(menu)
+tabs = st.tabs(["Data Overview", "EDA", "Visualization", "Model", "Prediction"])
 
-# ---------- UPLOAD ----------
-with choice[0]:
-    st.header("Upload Dataset")
-    file = st.file_uploader("Upload CSV", type=["csv"])
+# ---------- LOAD DATA ----------
+df = None
+file = st.file_uploader("Upload Dataset", type=["csv"])
 
-    if file:
-        df = pd.read_csv(file)
-        st.session_state["df"] = df
+if file:
+    df = pd.read_csv(file)
+    df = df.drop(columns=[col for col in df.columns if "id" in col.lower()], errors='ignore')
+
+    # Encode categorical
+    df = pd.get_dummies(df, drop_first=True)
+
+# ---------- TAB 1: DATA OVERVIEW ----------
+with tabs[0]:
+    if df is not None:
+        st.subheader("Dataset Preview")
         st.write(df.head())
 
-# ---------- EDA ----------
-with choice[1]:
-    if "df" in st.session_state:
-        df = st.session_state["df"]
+        st.write("Shape:", df.shape)
 
-        st.header("Exploratory Data Analysis")
+# ---------- TAB 2: EDA ----------
+with tabs[1]:
+    if df is not None:
+        st.subheader("Statistical Analysis")
 
-        st.subheader("Basic Info")
-        st.write(df.shape)
-        st.write(df.dtypes)
+        st.write("Mean")
+        st.write(df.mean())
 
-        st.subheader("Statistical Measures")
+        st.write("Median")
+        st.write(df.median())
 
-        if st.checkbox("Mean"):
-            st.write(df.mean(numeric_only=True))
+        st.write("Standard Deviation")
+        st.write(df.std())
 
-        if st.checkbox("Median"):
-            st.write(df.median(numeric_only=True))
-
-        if st.checkbox("Mode"):
-            st.write(df.mode().iloc[0])
-
-        if st.checkbox("Standard Deviation"):
-            st.write(df.std(numeric_only=True))
-
-        if st.checkbox("Variance"):
-            st.write(df.var(numeric_only=True))
-
-        if st.checkbox("Skewness"):
-            st.write(df.skew(numeric_only=True))
-
-# ---------- VISUALIZATION ----------
-with choice[2]:
-    if "df" in st.session_state:
-        df = st.session_state["df"]
-
-        st.header("Visualization")
-
-        plot = st.selectbox("Select Plot",
-                            ["Histogram", "Scatter", "Boxplot", "Heatmap"])
+# ---------- TAB 3: VISUALIZATION ----------
+with tabs[2]:
+    if df is not None:
+        st.subheader("Visualization")
 
         cols = df.columns
 
-        if plot == "Histogram":
-            col = st.selectbox("Select Column", cols)
+        plot_type = st.selectbox("Select Plot", ["Histogram", "Scatter", "Heatmap"])
+
+        if plot_type == "Histogram":
+            col = st.selectbox("Column", cols)
             fig, ax = plt.subplots()
             sns.histplot(df[col], ax=ax)
             st.pyplot(fig)
 
-        elif plot == "Scatter":
-            x = st.selectbox("X Axis", cols)
-            y = st.selectbox("Y Axis", cols)
+        elif plot_type == "Scatter":
+            x = st.selectbox("X-axis", cols)
+            y = st.selectbox("Y-axis", cols)
             fig, ax = plt.subplots()
             sns.scatterplot(x=df[x], y=df[y], ax=ax)
             st.pyplot(fig)
 
-        elif plot == "Boxplot":
-            col = st.selectbox("Select Column", cols)
+        elif plot_type == "Heatmap":
             fig, ax = plt.subplots()
-            sns.boxplot(x=df[col], ax=ax)
+            sns.heatmap(df.corr(), annot=True, ax=ax)
             st.pyplot(fig)
 
-        elif plot == "Heatmap":
-            fig, ax = plt.subplots()
-            sns.heatmap(df.corr(numeric_only=True), annot=True, ax=ax)
-            st.pyplot(fig)
-
-# ---------- PREPROCESSING ----------
-with choice[3]:
-    if "df" in st.session_state:
-        df = st.session_state["df"].copy()
-
-        st.header("Preprocessing")
-
-        if st.checkbox("Remove Duplicate Rows"):
-            df = df.drop_duplicates()
-
-        if st.checkbox("Handle Missing Values (Fill Mean)"):
-            df = df.fillna(df.mean(numeric_only=True))
-
-        if st.checkbox("Drop ID Columns"):
-            for col in df.columns:
-                if "id" in col.lower():
-                    df = df.drop(col, axis=1)
-
-        if st.checkbox("Encode Categorical Columns"):
-            df = pd.get_dummies(df, drop_first=True)
-
-        st.session_state["processed"] = df
-        st.write(df.head())
-
-# ---------- MODEL TRAINING ----------
-with choice[4]:
-    if "processed" in st.session_state:
-
-        df = st.session_state["processed"]
-
-        st.header("Model Training")
+# ---------- TAB 4: MODEL ----------
+with tabs[3]:
+    if df is not None:
+        st.subheader("Model Training")
 
         target = st.selectbox("Select Target Variable", df.columns)
 
         X = df.drop(target, axis=1)
         y = df[target]
 
-        model_type = st.selectbox("Select Model",
-                                 ["Linear Regression", "Random Forest", "Logistic Regression"])
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
 
-        test_size = st.slider("Test Size", 0.1, 0.5, 0.2)
+        model = LinearRegression()
 
         if st.button("Train Model"):
-
-            X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size)
-
-            if model_type == "Linear Regression":
-                model = LinearRegression()
-
-            elif model_type == "Random Forest":
-                model = RandomForestRegressor()
-
-            else:
-                model = LogisticRegression(max_iter=1000)
-
-            # Training progress
-            progress = st.progress(0)
-
-            for i in range(100):
-                progress.progress(i + 1)
-
             model.fit(X_train, y_train)
             y_pred = model.predict(X_test)
 
             st.session_state["model"] = model
-            st.session_state["X_test"] = X_test
-            st.session_state["y_test"] = y_test
-            st.session_state["y_pred"] = y_pred
+            st.session_state["features"] = X.columns
 
-            st.success("Model Trained Successfully")
+            st.success("Model Trained")
 
-# ---------- EVALUATION ----------
-with choice[5]:
+            st.write("R2 Score:", r2_score(y_test, y_pred))
+            st.write("MSE:", mean_squared_error(y_test, y_pred))
+
+            fig, ax = plt.subplots()
+            ax.scatter(y_test, y_pred)
+            ax.set_xlabel("Actual")
+            ax.set_ylabel("Predicted")
+            st.pyplot(fig)
+
+# ---------- TAB 5: PREDICTION ----------
+with tabs[4]:
     if "model" in st.session_state:
 
-        y_test = st.session_state["y_test"]
-        y_pred = st.session_state["y_pred"]
+        st.subheader("Predict Mental Wellbeing")
 
-        st.header("Model Evaluation")
-
-        st.write("R2 Score:", r2_score(y_test, y_pred))
-        st.write("MSE:", mean_squared_error(y_test, y_pred))
-
-        # Plot
-        fig, ax = plt.subplots()
-        ax.scatter(y_test, y_pred)
-        ax.set_xlabel("Actual")
-        ax.set_ylabel("Predicted")
-        st.pyplot(fig)
-
-# ---------- PREDICTION ----------
-with choice[6]:
-    if "model" in st.session_state:
-
-        st.header("Predict New Data")
-
-        df = st.session_state["processed"]
         model = st.session_state["model"]
+        features = st.session_state["features"]
 
         input_data = []
 
-        for col in df.columns[:-1]:
-            val = st.number_input(f"Enter {col}", value=0.0)
+        for feature in features:
+            val = st.number_input(f"Enter {feature}", value=0.0)
             input_data.append(val)
 
         if st.button("Predict"):
-            prediction = model.predict([input_data])
 
-            st.success(f"Predicted Output: {prediction[0]}")
+            prediction = model.predict([input_data])[0]
+
+            # Risk classification
+            if prediction <= 3:
+                risk = "HIGH 🔴"
+            elif prediction <= 6:
+                risk = "MODERATE 🟡"
+            else:
+                risk = "LOW 🟢"
+
+            st.success(f"Happiness Score: {round(prediction,2)}")
+            st.warning(f"Risk Level: {risk}")
+
+            # Recommendations
+            st.subheader("Recommendations")
+
+            suggestions = []
+
+            if input_data[1] > 6:
+                suggestions.append("Reduce screen time")
+
+            if input_data[2] < 5:
+                suggestions.append("Improve sleep quality")
+
+            if input_data[4] < 2:
+                suggestions.append("Increase physical activity")
+
+            for s in suggestions:
+                st.write("•", s)
