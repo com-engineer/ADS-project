@@ -9,7 +9,7 @@ _fe_pipeline = {
 }
 
 
-def init_fe_pipeline():
+def init_fe_pipeline(df):
     df = get_processed_df().copy()
     _fe_pipeline["current"] = df
     _fe_pipeline["step"] = 0
@@ -161,6 +161,13 @@ def get_fe_df():
 
 def get_fe_state():
     df = _fe_pipeline["current"]
+    if df is None:
+        return {
+            "step": 0,
+            "rows": 0,
+            "cols": 0,
+            "msg": "Feature pipeline not initialized"
+        }
     return {
         "step": _fe_pipeline["step"],
         "rows": int(df.shape[0]),

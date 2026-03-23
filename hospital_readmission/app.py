@@ -16,6 +16,7 @@ from modules.preprocessor import (
 # ⭐ NEW: Feature Engineering imports
 from modules.feature_engineering import (
     init_fe_pipeline,
+    get_processed_df,
     step1_create_features,
     step2_binning,
     step3_remove_correlation,
@@ -112,7 +113,8 @@ def ps7():
 # Initialize Feature Engineering (must call after preprocessing)
 @app.route("/api/feature/init", methods=["POST"])
 def fe_init():
-    init_fe_pipeline()
+    df = get_processed_df()
+    init_fe_pipeline(df)
     return jsonify({"status": "Feature Engineering Initialized"})
 
 # Get state

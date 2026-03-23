@@ -10,7 +10,7 @@ async function api(url) {
 }
 
 /* ── Phase switching (top-level nav) ── */
-function showPhase(phaseId, btn) {
+async function showPhase(phaseId, btn) {
   document.querySelectorAll('.phase').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.phase-btn').forEach(b => b.classList.remove('active'));
   document.querySelectorAll('.sub-nav').forEach(n => n.style.display = 'none');
@@ -18,10 +18,18 @@ function showPhase(phaseId, btn) {
   document.getElementById(phaseId).classList.add('active');
   if (!btn.classList.contains('disabled')) btn.classList.add('active');
 
-  const subnavMap = { 'phase-eda': 'subnav-eda', 'phase-preprocess': 'subnav-preprocess' };
+  const subnavMap = { 
+                      'phase-eda': 'subnav-eda', 
+                      'phase-preprocess': 'subnav-preprocess',
+                        'phase-feature': 'subnav-feature'
+                       };
   if (subnavMap[phaseId]) document.getElementById(subnavMap[phaseId]).style.display = 'flex';
 
   if (phaseId === 'phase-preprocess') refreshPipelineStatus();
+if (phaseId === 'phase-feature'){
+  await fetch('/api/feature/init', { method: 'POST' });
+  refreshFeatureStatus()
+} ;
 }
 
 /* ── Tab switching (within a phase) ── */

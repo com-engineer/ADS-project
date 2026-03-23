@@ -20,7 +20,7 @@
 <div class="phase-nav">
   <button class="phase-btn active" onclick="showPhase('phase-eda', this)">EDA</button>
   <button class="phase-btn" onclick="showPhase('phase-preprocess', this)">Preprocessing</button>
-  <button class="phase-btn disabled">Feature Engineering</button>
+  <button class="phase-btn" onclick="showPhase('phase-feature', this)">Feature Engineering</button>
   <button class="phase-btn disabled">Model Training</button>
   <button class="phase-btn disabled">Evaluation</button>
   <button class="phase-btn disabled">Prediction</button>
@@ -49,6 +49,14 @@
   <span class="step-pill" id="pill-7">7. Imbalance</span>
 </div>
 
+<!-- NEW: Feature sub-nav -->
+<div class="sub-nav" id="subnav-feature" style="display:none">
+  <span class="pipe-label">Pipeline:</span>
+  <span class="step-pill" id="fe-pill-1">1. Create</span>
+  <span class="step-pill" id="fe-pill-2">2. Binning</span>
+  <span class="step-pill" id="fe-pill-3">3. Correlation</span>
+  <span class="step-pill" id="fe-pill-4">4. Final Set</span>
+</div>
 <div class="container">
 
   <!-- ═══════════ PHASE: EDA ═══════════ -->
@@ -260,11 +268,93 @@
     </div>
   </div><!-- end phase-preprocess -->
 
+  <div id="phase-feature" class="phase">
+
+  <div class="pipe-status-bar">
+    <div class="pipe-metrics">
+      <div class="pipe-metric">
+        <div class="pipe-metric-label">Rows</div>
+        <div class="pipe-metric-val" id="fe-rows">—</div>
+      </div>
+      <div class="pipe-metric">
+        <div class="pipe-metric-label">Columns</div>
+        <div class="pipe-metric-val" id="fe-cols">—</div>
+      </div>
+      <div class="pipe-metric">
+        <div class="pipe-metric-label">Missing</div>
+        <div class="pipe-metric-val" id="fe-missing">—</div>
+      </div>
+      <div class="pipe-metric">
+        <div class="pipe-metric-label">Steps</div>
+        <div class="pipe-metric-val" id="fe-step">0 / 4</div>
+      </div>
+    </div>
+
+    <button class="btn btn-outline" onclick="initFeature()">Initialize</button>
+  </div>
+
+  <div class="steps-grid">
+
+    <!-- Step 1 -->
+    <div class="step-card" id="fe-card-1">
+      <div class="step-header">
+        <div class="step-num">1</div>
+        <div class="step-info">
+          <div class="step-title">Create Features</div>
+          <div class="step-desc">Total visits, medication intensity, long stay flag</div>
+        </div>
+        <button class="btn step-btn" onclick="applyFeatureStep(1)">Apply</button>
+      </div>
+      <div class="step-result" id="fe-result-1"></div>
+    </div>
+
+    <!-- Step 2 -->
+    <div class="step-card" id="fe-card-2">
+      <div class="step-header">
+        <div class="step-num">2</div>
+        <div class="step-info">
+          <div class="step-title">Binning</div>
+          <div class="step-desc">Convert numerical features into groups</div>
+        </div>
+        <button class="btn step-btn" onclick="applyFeatureStep(2)">Apply</button>
+      </div>
+      <div class="step-result" id="fe-result-2"></div>
+    </div>
+
+    <!-- Step 3 -->
+    <div class="step-card" id="fe-card-3">
+      <div class="step-header">
+        <div class="step-num">3</div>
+        <div class="step-info">
+          <div class="step-title">Remove Correlation</div>
+          <div class="step-desc">Drop highly correlated features (>0.9)</div>
+        </div>
+        <button class="btn step-btn" onclick="applyFeatureStep(3)">Apply</button>
+      </div>
+      <div class="step-result" id="fe-result-3"></div>
+    </div>
+
+    <!-- Step 4 -->
+    <div class="step-card" id="fe-card-4">
+      <div class="step-header">
+        <div class="step-num">4</div>
+        <div class="step-info">
+          <div class="step-title">Prepare X & y</div>
+          <div class="step-desc">Final dataset for model training</div>
+        </div>
+        <button class="btn step-btn" onclick="applyFeatureStep(4)">Apply</button>
+      </div>
+      <div class="step-result" id="fe-result-4"></div>
+    </div>
+
+  </div>
+</div>
 </div><!-- end container -->
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 <script src="{{ url_for('static', filename='js/preprocess.js') }}"></script>
+<script src="{{ url_for('static', filename='js/feature.js') }}"></script>
 
 </body>
 </html>
