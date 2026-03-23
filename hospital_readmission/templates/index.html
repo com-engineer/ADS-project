@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hospital Readmission — ML Dashboard</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+<header>
+  <div class="logo">H</div>
+  <div>
+    <h1>Hospital Readmission Prediction</h1>
+    <p>Applied Data Science — Interactive ML Dashboard</p>
+  </div>
+</header>
+
+<!-- Phase nav (top level) -->
+<div class="phase-nav">
+  <button class="phase-btn active" onclick="showPhase('phase-eda', this)">EDA</button>
+  <button class="phase-btn" onclick="showPhase('phase-preprocess', this)">Preprocessing</button>
+  <button class="phase-btn disabled">Feature Engineering</button>
+  <button class="phase-btn disabled">Model Training</button>
+  <button class="phase-btn disabled">Evaluation</button>
+  <button class="phase-btn disabled">Prediction</button>
+</div>
+
+<!-- EDA sub-nav -->
+<div class="sub-nav" id="subnav-eda">
+  <button class="active" onclick="showTab('eda-overview', this)">Overview</button>
+  <button onclick="showTab('eda-univariate', this)">Univariate</button>
+  <button onclick="showTab('eda-bivariate', this)">Bivariate</button>
+  <button onclick="showTab('eda-stats', this)">Statistics</button>
+  <button onclick="showTab('eda-missing', this)">Missing Values</button>
+  <button onclick="showTab('eda-correlation', this)">Correlation</button>
+  <button onclick="showTab('eda-target', this)">Target Analysis</button>
+</div>
+
+<!-- Preprocessing sub-nav (pipeline pills) -->
+<div class="sub-nav" id="subnav-preprocess" style="display:none">
+  <span class="pipe-label">Pipeline:</span>
+  <span class="step-pill" id="pill-1">1. Drop cols</span>
+  <span class="step-pill" id="pill-2">2. Missing</span>
+  <span class="step-pill" id="pill-3">3. Target</span>
+  <span class="step-pill" id="pill-4">4. Duplicates</span>
+  <span class="step-pill" id="pill-5">5. Encode</span>
+  <span class="step-pill" id="pill-6">6. Scale</span>
+  <span class="step-pill" id="pill-7">7. Imbalance</span>
+</div>
+
+<div class="container">
+
+  <!-- ═══════════ PHASE: EDA ═══════════ -->
+  <div id="phase-eda" class="phase active">
+
+    <div id="eda-overview" class="section active">
+      <div class="metric-row">
+        <div class="metric"><div class="metric-label">Total records</div><div class="metric-val" id="m-rows">—</div></div>
+        <div class="metric"><div class="metric-label">Total features</div><div class="metric-val" id="m-cols">—</div></div>
+        <div class="metric"><div class="metric-label">Missing cells</div><div class="metric-val" id="m-missing">—</div></div>
+        <div class="metric"><div class="metric-label">Duplicate rows</div><div class="metric-val" id="m-dupes">—</div></div>
+      </div>
+      <div class="card">
+        <h3>Target class distribution</h3>
+        <div class="chart-box"><canvas id="targetChart"></canvas></div>
+      </div>
+    </div>
+
+    <div id="eda-univariate" class="section">
+      <div class="card">
+        <h3>Univariate analysis</h3>
+        <div class="controls">
+          <select id="uni-col"></select>
+          <select id="uni-type">
+            <option value="bar">Bar / Histogram</option>
+            <option value="pie">Pie chart</option>
+          </select>
+          <button class="btn" onclick="renderUni()">Plot</button>
+        </div>
+        <div class="chart-box"><canvas id="uniChart"></canvas></div>
+        <div class="insight" id="uni-insight" style="display:none"></div>
+      </div>
+    </div>
+
+    <div id="eda-bivariate" class="section">
+      <div class="card">
+        <h3>Bivariate analysis</h3>
+        <div class="controls">
+          <select id="bi-x"></select>
+          <span class="vs-label">vs</span>
+          <select id="bi-y"></select>
+          <button class="btn" onclick="renderBi()">Plot</button>
+        </div>
+        <div class="chart-box"><canvas id="biChart"></canvas></div>
+      </div>
+    </div>
+
+    <div id="eda-stats" class="section">
+      <div class="card">
+        <h3>Descriptive statistics</h3>
+        <div class="controls">
+          <select id="stats-col"></select>
+          <button class="btn" onclick="renderStats()">Compute</button>
+        </div>
+        <div class="stat-grid" id="stat-grid"></div>
+      </div>
+    </div>
+
+    <div id="eda-missing" class="section">
+      <div class="card">
+        <h3>Missing value analysis</h3>
+        <table>
+          <thead><tr><th>Column</th><th>Missing count</th><th>Missing %</th><th>Suggested action</th></tr></thead>
+          <tbody id="missing-body"><tr><td colspan="4" class="loading">Loading...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="eda-correlation" class="section">
+      <div class="card">
+        <h3>Correlation heatmap — numeric features</h3>
+        <div class="chart-box-lg"><canvas id="corrChart"></canvas></div>
+      </div>
+    </div>
+
+    <div id="eda-target" class="section">
+      <div class="card">
+        <h3>Readmission rate by feature</h3>
+        <div class="controls">
+          <select id="tgt-col"></select>
+          <button class="btn" onclick="renderTarget()">Plot</button>
+        </div>
+        <div class="chart-box"><canvas id="tgtChart"></canvas></div>
+      </div>
+    </div>
+
+  </div><!-- end phase-eda -->
+
+
+  <!-- ═══════════ PHASE: PREPROCESSING ═══════════ -->
+  <div id="phase-preprocess" class="phase">
+
+    <!-- Live pipeline status bar -->
+    <div class="pipe-status-bar">
+      <div class="pipe-metrics">
+        <div class="pipe-metric">
+          <div class="pipe-metric-label">Rows</div>
+          <div class="pipe-metric-val" id="pipe-rows">—</div>
+        </div>
+        <div class="pipe-metric">
+          <div class="pipe-metric-label">Columns</div>
+          <div class="pipe-metric-val" id="pipe-cols">—</div>
+        </div>
+        <div class="pipe-metric">
+          <div class="pipe-metric-label">Missing cells</div>
+          <div class="pipe-metric-val" id="pipe-missing">—</div>
+        </div>
+        <div class="pipe-metric">
+          <div class="pipe-metric-label">Steps done</div>
+          <div class="pipe-metric-val" id="pipe-step">0 / 7</div>
+        </div>
+      </div>
+      <button class="btn btn-outline" onclick="resetPipeline()">↺ Reset pipeline</button>
+    </div>
+
+    <div class="steps-grid">
+
+      <!-- Step 1 -->
+      <div class="step-card" id="step-card-1">
+        <div class="step-header">
+          <div class="step-num">1</div>
+          <div class="step-info">
+            <div class="step-title">Drop useless columns</div>
+            <div class="step-desc">Remove weight (97% missing), payer_code, encounter_id, patient_nbr</div>
+          </div>
+          <button class="btn step-btn" onclick="applyStep(1)">Apply</button>
+        </div>
+        <div class="step-result" id="result-1"></div>
+      </div>
+
+      <!-- Step 2 -->
+      <div class="step-card" id="step-card-2">
+        <div class="step-header">
+          <div class="step-num">2</div>
+          <div class="step-info">
+            <div class="step-title">Handle missing values</div>
+            <div class="step-desc">Fill race with mode, medical_specialty → "Unknown", drop diag_1 nulls</div>
+          </div>
+          <button class="btn step-btn" onclick="applyStep(2)">Apply</button>
+        </div>
+        <div class="step-result" id="result-2"></div>
+      </div>
+
+      <!-- Step 3 -->
+      <div class="step-card" id="step-card-3">
+        <div class="step-header">
+          <div class="step-num">3</div>
+          <div class="step-info">
+            <div class="step-title">Encode target variable</div>
+            <div class="step-desc">readmitted → binary: &lt;30 days = 1, all others = 0</div>
+          </div>
+          <button class="btn step-btn" onclick="applyStep(3)">Apply</button>
+        </div>
+        <div class="step-result" id="result-3"></div>
+      </div>
+
+      <!-- Step 4 -->
+      <div class="step-card" id="step-card-4">
+        <div class="step-header">
+          <div class="step-num">4</div>
+          <div class="step-info">
+            <div class="step-title">Remove duplicate rows</div>
+            <div class="step-desc">Drop exact duplicate records from the dataset</div>
+          </div>
+          <button class="btn step-btn" onclick="applyStep(4)">Apply</button>
+        </div>
+        <div class="step-result" id="result-4"></div>
+      </div>
+
+      <!-- Step 5 -->
+      <div class="step-card" id="step-card-5">
+        <div class="step-header">
+          <div class="step-num">5</div>
+          <div class="step-info">
+            <div class="step-title">Encode categorical features</div>
+            <div class="step-desc">Ordinal encode age, label encode race, gender, diagnosis columns</div>
+          </div>
+          <button class="btn step-btn" onclick="applyStep(5)">Apply</button>
+        </div>
+        <div class="step-result" id="result-5"></div>
+      </div>
+
+      <!-- Step 6 -->
+      <div class="step-card" id="step-card-6">
+        <div class="step-header">
+          <div class="step-num">6</div>
+          <div class="step-info">
+            <div class="step-title">Scale numeric features</div>
+            <div class="step-desc">StandardScaler on time_in_hospital, num_medications, lab procedures, etc.</div>
+          </div>
+          <button class="btn step-btn" onclick="applyStep(6)">Apply</button>
+        </div>
+        <div class="step-result" id="result-6"></div>
+      </div>
+
+      <!-- Step 7 -->
+      <div class="step-card" id="step-card-7">
+        <div class="step-header">
+          <div class="step-num">7</div>
+          <div class="step-info">
+            <div class="step-title">Handle class imbalance</div>
+            <div class="step-desc">Undersample majority class to achieve a balanced 2:1 ratio</div>
+          </div>
+          <button class="btn step-btn" onclick="applyStep(7)">Apply</button>
+        </div>
+        <div class="step-result" id="result-7"></div>
+      </div>
+
+    </div>
+  </div><!-- end phase-preprocess -->
+
+</div><!-- end container -->
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+<script src="{{ url_for('static', filename='js/preprocess.js') }}"></script>
+
+</body>
+</html>
