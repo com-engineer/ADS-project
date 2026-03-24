@@ -14,14 +14,11 @@ from modules.preprocessor import (
 )
 
 # ⭐ NEW: Feature Engineering imports
-from modules.feature_engineering import (
-    init_fe_pipeline,
-    get_processed_df,
-    step1_create_features,
-    step2_binning,
-    step3_remove_correlation,
-    step4_prepare_xy,
-    get_fe_state
+from modules.feature_engineer import (
+    init_fe, get_fe_state, get_feature_list,
+    fe_step1_total_visits, fe_step2_age_risk,
+    fe_step3_glucose_risk, fe_step4_high_utilizer,
+    fe_step5_diagnosis_count, fe_step6_drop_low_value
 )
 
 app = Flask(__name__)
@@ -110,38 +107,37 @@ def ps7():
 
 # ── Feature Engineering ────────────────────────────────────────────────
 
-# Initialize Feature Engineering (must call after preprocessing)
-@app.route("/api/feature/init", methods=["POST"])
+# Feature Engineering
+@app.route("/api/fe/init", methods=["POST"])
 def fe_init():
-    df = get_processed_df()
-    init_fe_pipeline(df)
-    return jsonify({"status": "Feature Engineering Initialized"})
+    init_fe()
+    return jsonify(get_fe_state())
 
-# Get state
-@app.route("/api/feature/state")
+@app.route("/api/fe/state")
 def fe_state():
     return jsonify(get_fe_state())
 
-# Step 1: Create features
-@app.route("/api/feature/step/1", methods=["POST"])
-def fe_s1():
-    return jsonify(step1_create_features())
+@app.route("/api/fe/features")
+def fe_features():
+    return jsonify({"features": get_feature_list()})
 
-# Step 2: Binning
-@app.route("/api/feature/step/2", methods=["POST"])
-def fe_s2():
-    return jsonify(step2_binning())
+@app.route("/api/fe/step/1", methods=["POST"])
+def fe1(): return jsonify(fe_step1_total_visits())
 
-# Step 3: Remove correlation
-@app.route("/api/feature/step/3", methods=["POST"])
-def fe_s3():
-    return jsonify(step3_remove_correlation())
+@app.route("/api/fe/step/2", methods=["POST"])
+def fe2(): return jsonify(fe_step2_age_risk())
 
-# Step 4: Prepare X, y
-@app.route("/api/feature/step/4", methods=["POST"])
-def fe_s4():
-    return jsonify(step4_prepare_xy())
+@app.route("/api/fe/step/3", methods=["POST"])
+def fe3(): return jsonify(fe_step3_glucose_risk())
 
+@app.route("/api/fe/step/4", methods=["POST"])
+def fe4(): return jsonify(fe_step4_high_utilizer())
+
+@app.route("/api/fe/step/5", methods=["POST"])
+def fe5(): return jsonify(fe_step5_diagnosis_count())
+
+@app.route("/api/fe/step/6", methods=["POST"])
+def fe6(): return jsonify(fe_step6_drop_low_value())
 # ── Run App ────────────────────────────────────────────────────────────
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=True, use_reloader=False)

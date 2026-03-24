@@ -9,8 +9,8 @@ async function api(url) {
   return r.json();
 }
 
-/* ── Phase switching (top-level nav) ── */
-async function showPhase(phaseId, btn) {
+/* ── Phase switching ── */
+function showPhase(phaseId, btn) {
   document.querySelectorAll('.phase').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.phase-btn').forEach(b => b.classList.remove('active'));
   document.querySelectorAll('.sub-nav').forEach(n => n.style.display = 'none');
@@ -18,23 +18,21 @@ async function showPhase(phaseId, btn) {
   document.getElementById(phaseId).classList.add('active');
   if (!btn.classList.contains('disabled')) btn.classList.add('active');
 
-  const subnavMap = { 
-                      'phase-eda': 'subnav-eda', 
-                      'phase-preprocess': 'subnav-preprocess',
-                        'phase-feature': 'subnav-feature'
-                       };
-  if (subnavMap[phaseId]) document.getElementById(subnavMap[phaseId]).style.display = 'flex';
+  const subnavMap = {
+    'phase-eda':        'subnav-eda',
+    'phase-preprocess': 'subnav-preprocess',
+    'phase-fe':         null
+  };
+
+  const subnavId = subnavMap[phaseId];
+  if (subnavId) document.getElementById(subnavId).style.display = 'flex';
 
   if (phaseId === 'phase-preprocess') refreshPipelineStatus();
-if (phaseId === 'phase-feature'){
-  await fetch('/api/feature/init', { method: 'POST' });
-  refreshFeatureStatus()
-} ;
 }
 
-/* ── Tab switching (within a phase) ── */
+/* ── Tab switching (within EDA) ── */
 function showTab(id, btn) {
-  const subnav = btn.closest('.sub-nav');
+  const subnav  = btn.closest('.sub-nav');
   const phaseId = 'phase-' + subnav.id.replace('subnav-', '');
   document.querySelectorAll('#' + phaseId + ' .section').forEach(s => s.classList.remove('active'));
   subnav.querySelectorAll('button').forEach(b => b.classList.remove('active'));
@@ -42,7 +40,7 @@ function showTab(id, btn) {
   btn.classList.add('active');
 }
 
-/* ── Populate all <select> elements with column names ── */
+/* ── Populate selects ── */
 function populateSelects(columns) {
   ['uni-col', 'bi-x', 'bi-y', 'stats-col', 'tgt-col'].forEach(id => {
     const sel = document.getElementById(id);
@@ -78,7 +76,7 @@ async function initOverview() {
   });
 }
 
-/* ── Missing values table ── */
+/* ── Missing values ── */
 async function initMissing() {
   const miss = await api('/api/missing');
   const tbody = document.getElementById('missing-body');
@@ -87,7 +85,7 @@ async function initMissing() {
     return;
   }
   tbody.innerHTML = miss.map(m => {
-    const pct = m.missing_pct;
+    const pct    = m.missing_pct;
     const cls    = pct > 50 ? 'badge-red' : pct > 20 ? 'badge-yellow' : 'badge-green';
     const action = pct > 50 ? 'Drop column' : pct > 20 ? 'Review / fill' : 'Fill with mode';
     return `<tr><td><strong>${m.column}</strong></td><td>${m.missing_count.toLocaleString()}</td>
@@ -176,8 +174,8 @@ async function renderCorr() {
           return `${d.columns[p.y]} × ${d.columns[p.x]}: ${p.v.toFixed(2)}`;
         }}}},
       scales: {
-        x: { min: -0.5, max: n-0.5, ticks: { callback: i => d.columns[Math.round(i)]||'', font:{size:10} }, grid:{display:false} },
-        y: { min: -0.5, max: n-0.5, ticks: { callback: i => d.columns[Math.round(i)]||'', font:{size:10} }, grid:{display:false} }
+        x: { min:-0.5, max:n-0.5, ticks:{callback:i=>d.columns[Math.round(i)]||'',font:{size:10}}, grid:{display:false} },
+        y: { min:-0.5, max:n-0.5, ticks:{callback:i=>d.columns[Math.round(i)]||'',font:{size:10}}, grid:{display:false} }
       }}
   });
 }

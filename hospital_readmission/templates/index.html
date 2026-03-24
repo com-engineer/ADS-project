@@ -20,7 +20,7 @@
 <div class="phase-nav">
   <button class="phase-btn active" onclick="showPhase('phase-eda', this)">EDA</button>
   <button class="phase-btn" onclick="showPhase('phase-preprocess', this)">Preprocessing</button>
-  <button class="phase-btn" onclick="showPhase('phase-feature', this)">Feature Engineering</button>
+  <button class="phase-btn" onclick="showPhase('phase-fe', this)">Feature Engineering</button>
   <button class="phase-btn disabled">Model Training</button>
   <button class="phase-btn disabled">Evaluation</button>
   <button class="phase-btn disabled">Prediction</button>
@@ -37,7 +37,7 @@
   <button onclick="showTab('eda-target', this)">Target Analysis</button>
 </div>
 
-<!-- Preprocessing sub-nav (pipeline pills) -->
+<!-- Preprocessing sub-nav -->
 <div class="sub-nav" id="subnav-preprocess" style="display:none">
   <span class="pipe-label">Pipeline:</span>
   <span class="step-pill" id="pill-1">1. Drop cols</span>
@@ -49,14 +49,6 @@
   <span class="step-pill" id="pill-7">7. Imbalance</span>
 </div>
 
-<!-- NEW: Feature sub-nav -->
-<div class="sub-nav" id="subnav-feature" style="display:none">
-  <span class="pipe-label">Pipeline:</span>
-  <span class="step-pill" id="fe-pill-1">1. Create</span>
-  <span class="step-pill" id="fe-pill-2">2. Binning</span>
-  <span class="step-pill" id="fe-pill-3">3. Correlation</span>
-  <span class="step-pill" id="fe-pill-4">4. Final Set</span>
-</div>
 <div class="container">
 
   <!-- ═══════════ PHASE: EDA ═══════════ -->
@@ -149,7 +141,6 @@
   <!-- ═══════════ PHASE: PREPROCESSING ═══════════ -->
   <div id="phase-preprocess" class="phase">
 
-    <!-- Live pipeline status bar -->
     <div class="pipe-status-bar">
       <div class="pipe-metrics">
         <div class="pipe-metric">
@@ -174,7 +165,6 @@
 
     <div class="steps-grid">
 
-      <!-- Step 1 -->
       <div class="step-card" id="step-card-1">
         <div class="step-header">
           <div class="step-num">1</div>
@@ -187,7 +177,6 @@
         <div class="step-result" id="result-1"></div>
       </div>
 
-      <!-- Step 2 -->
       <div class="step-card" id="step-card-2">
         <div class="step-header">
           <div class="step-num">2</div>
@@ -200,7 +189,6 @@
         <div class="step-result" id="result-2"></div>
       </div>
 
-      <!-- Step 3 -->
       <div class="step-card" id="step-card-3">
         <div class="step-header">
           <div class="step-num">3</div>
@@ -213,7 +201,6 @@
         <div class="step-result" id="result-3"></div>
       </div>
 
-      <!-- Step 4 -->
       <div class="step-card" id="step-card-4">
         <div class="step-header">
           <div class="step-num">4</div>
@@ -226,7 +213,6 @@
         <div class="step-result" id="result-4"></div>
       </div>
 
-      <!-- Step 5 -->
       <div class="step-card" id="step-card-5">
         <div class="step-header">
           <div class="step-num">5</div>
@@ -239,7 +225,6 @@
         <div class="step-result" id="result-5"></div>
       </div>
 
-      <!-- Step 6 -->
       <div class="step-card" id="step-card-6">
         <div class="step-header">
           <div class="step-num">6</div>
@@ -252,7 +237,6 @@
         <div class="step-result" id="result-6"></div>
       </div>
 
-      <!-- Step 7 -->
       <div class="step-card" id="step-card-7">
         <div class="step-header">
           <div class="step-num">7</div>
@@ -268,93 +252,121 @@
     </div>
   </div><!-- end phase-preprocess -->
 
-  <div id="phase-feature" class="phase">
 
-  <div class="pipe-status-bar">
-    <div class="pipe-metrics">
-      <div class="pipe-metric">
-        <div class="pipe-metric-label">Rows</div>
-        <div class="pipe-metric-val" id="fe-rows">—</div>
-      </div>
-      <div class="pipe-metric">
-        <div class="pipe-metric-label">Columns</div>
-        <div class="pipe-metric-val" id="fe-cols">—</div>
-      </div>
-      <div class="pipe-metric">
-        <div class="pipe-metric-label">Missing</div>
-        <div class="pipe-metric-val" id="fe-missing">—</div>
-      </div>
-      <div class="pipe-metric">
-        <div class="pipe-metric-label">Steps</div>
-        <div class="pipe-metric-val" id="fe-step">0 / 4</div>
-      </div>
-    </div>
+  <!-- ═══════════ PHASE: FEATURE ENGINEERING ═══════════ -->
+  <div id="phase-fe" class="phase">
 
-    <button class="btn btn-outline" onclick="initFeature()">Initialize</button>
-  </div>
-
-  <div class="steps-grid">
-
-    <!-- Step 1 -->
-    <div class="step-card" id="fe-card-1">
-      <div class="step-header">
-        <div class="step-num">1</div>
-        <div class="step-info">
-          <div class="step-title">Create Features</div>
-          <div class="step-desc">Total visits, medication intensity, long stay flag</div>
+    <div class="pipe-status-bar">
+      <div class="pipe-metrics">
+        <div class="pipe-metric">
+          <div class="pipe-metric-label">Rows</div>
+          <div class="pipe-metric-val" id="fe-rows">—</div>
         </div>
-        <button class="btn step-btn" onclick="applyFeatureStep(1)">Apply</button>
-      </div>
-      <div class="step-result" id="fe-result-1"></div>
-    </div>
-
-    <!-- Step 2 -->
-    <div class="step-card" id="fe-card-2">
-      <div class="step-header">
-        <div class="step-num">2</div>
-        <div class="step-info">
-          <div class="step-title">Binning</div>
-          <div class="step-desc">Convert numerical features into groups</div>
+        <div class="pipe-metric">
+          <div class="pipe-metric-label">Columns</div>
+          <div class="pipe-metric-val" id="fe-cols">—</div>
         </div>
-        <button class="btn step-btn" onclick="applyFeatureStep(2)">Apply</button>
-      </div>
-      <div class="step-result" id="fe-result-2"></div>
-    </div>
-
-    <!-- Step 3 -->
-    <div class="step-card" id="fe-card-3">
-      <div class="step-header">
-        <div class="step-num">3</div>
-        <div class="step-info">
-          <div class="step-title">Remove Correlation</div>
-          <div class="step-desc">Drop highly correlated features (>0.9)</div>
+        <div class="pipe-metric">
+          <div class="pipe-metric-label">New features</div>
+          <div class="pipe-metric-val" id="fe-new">0</div>
         </div>
-        <button class="btn step-btn" onclick="applyFeatureStep(3)">Apply</button>
-      </div>
-      <div class="step-result" id="fe-result-3"></div>
-    </div>
-
-    <!-- Step 4 -->
-    <div class="step-card" id="fe-card-4">
-      <div class="step-header">
-        <div class="step-num">4</div>
-        <div class="step-info">
-          <div class="step-title">Prepare X & y</div>
-          <div class="step-desc">Final dataset for model training</div>
+        <div class="pipe-metric">
+          <div class="pipe-metric-label">Steps done</div>
+          <div class="pipe-metric-val" id="fe-step">0 / 6</div>
         </div>
-        <button class="btn step-btn" onclick="applyFeatureStep(4)">Apply</button>
       </div>
-      <div class="step-result" id="fe-result-4"></div>
+      <button class="btn" onclick="initFE()">Load preprocessed data</button>
     </div>
 
-  </div>
-</div>
+    <div class="steps-grid">
+
+      <div class="step-card" id="fe-card-1">
+        <div class="step-header">
+          <div class="step-num">1</div>
+          <div class="step-info">
+            <div class="step-title">Total visits</div>
+            <div class="step-desc">Sum outpatient + emergency + inpatient into one feature</div>
+          </div>
+          <button class="btn step-btn" onclick="applyFE(1)">Apply</button>
+        </div>
+        <div class="step-result" id="fe-result-1"></div>
+      </div>
+
+      <div class="step-card" id="fe-card-2">
+        <div class="step-header">
+          <div class="step-num">2</div>
+          <div class="step-info">
+            <div class="step-title">Age risk score</div>
+            <div class="step-desc">Map encoded age groups to clinical risk levels (1–5)</div>
+          </div>
+          <button class="btn step-btn" onclick="applyFE(2)">Apply</button>
+        </div>
+        <div class="step-result" id="fe-result-2"></div>
+      </div>
+
+      <div class="step-card" id="fe-card-3">
+        <div class="step-header">
+          <div class="step-num">3</div>
+          <div class="step-info">
+            <div class="step-title">Glucose risk score</div>
+            <div class="step-desc">Convert max glucose serum test result into ordered risk (0–3)</div>
+          </div>
+          <button class="btn step-btn" onclick="applyFE(3)">Apply</button>
+        </div>
+        <div class="step-result" id="fe-result-3"></div>
+      </div>
+
+      <div class="step-card" id="fe-card-4">
+        <div class="step-header">
+          <div class="step-num">4</div>
+          <div class="step-info">
+            <div class="step-title">High utilizer flag</div>
+            <div class="step-desc">Flag patients with total visits > 3 as high utilizers</div>
+          </div>
+          <button class="btn step-btn" onclick="applyFE(4)">Apply</button>
+        </div>
+        <div class="step-result" id="fe-result-4"></div>
+      </div>
+
+      <div class="step-card" id="fe-card-5">
+        <div class="step-header">
+          <div class="step-num">5</div>
+          <div class="step-info">
+            <div class="step-title">Diagnosis count</div>
+            <div class="step-desc">Count how many of diag_1, diag_2, diag_3 are present per patient</div>
+          </div>
+          <button class="btn step-btn" onclick="applyFE(5)">Apply</button>
+        </div>
+        <div class="step-result" id="fe-result-5"></div>
+      </div>
+
+      <div class="step-card" id="fe-card-6">
+        <div class="step-header">
+          <div class="step-num">6</div>
+          <div class="step-info">
+            <div class="step-title">Drop low-value columns</div>
+            <div class="step-desc">Remove zero/near-zero variance columns that add noise</div>
+          </div>
+          <button class="btn step-btn" onclick="applyFE(6)">Apply</button>
+        </div>
+        <div class="step-result" id="fe-result-6"></div>
+      </div>
+
+    </div>
+
+    <div class="card" id="fe-feature-list-card" style="margin-top:16px;display:none">
+      <h3>Final feature list</h3>
+      <div id="fe-feature-tags"></div>
+    </div>
+
+  </div><!-- end phase-fe -->
+
 </div><!-- end container -->
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 <script src="{{ url_for('static', filename='js/preprocess.js') }}"></script>
-<script src="{{ url_for('static', filename='js/feature.js') }}"></script>
+<script src="{{ url_for('static', filename='js/feature_eng.js') }}"></script>
 
 </body>
 </html>

@@ -76,12 +76,15 @@ def step2_fix_missing():
 
     if "race" in df.columns:
         n = int(df["race"].isnull().sum())
-        df["race"].fillna(df["race"].mode()[0], inplace=True)
+        # df["race"].fillna(df["race"].mode()[0], inplace=True)
+        df["race"] = df["race"].fillna(df["race"].mode()[0])
         filled["race"] = {"count": n, "strategy": "mode"}
 
     if "medical_specialty" in df.columns:
         n = int(df["medical_specialty"].isnull().sum())
-        df["medical_specialty"].fillna("Unknown", inplace=True)
+        # df["medical_specialty"].fillna("Unknown", inplace=True)
+        df["medical_specialty"] = df["medical_specialty"].fillna("Unknown")
+
         filled["medical_specialty"] = {"count": n, "strategy": "Unknown"}
 
     if "diag_1" in df.columns:

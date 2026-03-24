@@ -661,3 +661,5 @@ tbody tr:hover {
   .phase-nav { padding: 0 12px; }
   .step-header { flex-wrap: wrap; }
 }
+
+.tag-green { background: #EAF3DE; color: #3B6D11; }
