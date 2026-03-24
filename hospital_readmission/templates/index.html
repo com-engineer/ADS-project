@@ -21,8 +21,9 @@
   <button class="phase-btn active" onclick="showPhase('phase-eda', this)">EDA</button>
   <button class="phase-btn" onclick="showPhase('phase-preprocess', this)">Preprocessing</button>
   <button class="phase-btn" onclick="showPhase('phase-fe', this)">Feature Engineering</button>
-  <button class="phase-btn disabled">Model Training</button>
-  <button class="phase-btn disabled">Evaluation</button>
+  <button class="phase-btn" onclick="showPhase('phase-fs', this)">Feature Selection</button>
+  <button class="phase-btn" onclick="showPhase('phase-model', this)">Model Training</button>
+  <button class="phase-btn" onclick="showPhase('phase-eval', this)">Evaluation</button>
   <button class="phase-btn disabled">Prediction</button>
 </div>
 
@@ -162,7 +163,7 @@
       </div>
       <button class="btn btn-outline" onclick="resetPipeline()">↺ Reset pipeline</button>
     </div>
-
+    
     <div class="steps-grid">
 
       <div class="step-card" id="step-card-1">
@@ -360,13 +361,353 @@
     </div>
 
   </div><!-- end phase-fe -->
+  <!-- ═══════════ PHASE: FEATURE SELECTION ═══════════ -->
+<div id="phase-fs" class="phase">
 
+  <div class="pipe-status-bar">
+    <div class="pipe-metrics">
+      <div class="pipe-metric">
+        <div class="pipe-metric-label">Rows</div>
+        <div class="pipe-metric-val" id="fs-rows">—</div>
+      </div>
+      <div class="pipe-metric">
+        <div class="pipe-metric-label">Columns</div>
+        <div class="pipe-metric-val" id="fs-cols">—</div>
+      </div>
+      <div class="pipe-metric">
+        <div class="pipe-metric-label">Dropped so far</div>
+        <div class="pipe-metric-val" id="fs-dropped">0</div>
+      </div>
+      <div class="pipe-metric">
+        <div class="pipe-metric-label">Steps done</div>
+        <div class="pipe-metric-val" id="fs-step">0 / 4</div>
+      </div>
+    </div>
+    <button class="btn" onclick="initFS()">Load FE data</button>
+  </div>
+  <!-- Visual analysis cards -->
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:18px" id="fs-visuals" style="display:none">
+
+  <div class="card">
+    <h3>Correlation heatmap</h3>
+    <div style="margin-bottom:8px;display:flex;gap:10px;font-size:12px;flex-wrap:wrap">
+      <span style="display:flex;align-items:center;gap:4px">
+        <span style="width:10px;height:10px;border-radius:50%;background:#A32D2D;display:inline-block"></span>
+        ≥ 0.85 (drop)
+      </span>
+      <span style="display:flex;align-items:center;gap:4px">
+        <span style="width:10px;height:10px;border-radius:50%;background:#E24B4A;display:inline-block"></span>
+        ≥ 0.60
+      </span>
+      <span style="display:flex;align-items:center;gap:4px">
+        <span style="width:10px;height:10px;border-radius:50%;background:#EF9F27;display:inline-block"></span>
+        ≥ 0.40
+      </span>
+      <span style="display:flex;align-items:center;gap:4px">
+        <span style="width:10px;height:10px;border-radius:50%;background:#378ADD;display:inline-block"></span>
+        ≥ 0.20
+      </span>
+      <span style="display:flex;align-items:center;gap:4px">
+        <span style="width:10px;height:10px;border-radius:50%;background:#D3D1C7;display:inline-block"></span>
+        low
+      </span>
+    </div>
+    <div style="position:relative;width:100%;height:320px">
+      <canvas id="fs-corr-canvas"></canvas>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Feature importance (Random Forest)</h3>
+    <div style="font-size:12px;color:#888;margin-bottom:10px">
+      Top 15 features — darker = more important
+    </div>
+    <div style="position:relative;width:100%;height:320px">
+      <canvas id="fs-imp-canvas"></canvas>
+    </div>
+  </div>
+
+</div>
+  <div class="steps-grid">
+
+    <div class="step-card" id="fs-card-1">
+      <div class="step-header">
+        <div class="step-num">1</div>
+        <div class="step-info">
+          <div class="step-title">Correlation filter</div>
+          <div class="step-desc">Drop features with correlation > 0.85 to remove redundancy</div>
+        </div>
+        <button class="btn step-btn" onclick="applyFS(1)">Apply</button>
+      </div>
+      <div class="step-result" id="fs-result-1"></div>
+    </div>
+
+    <div class="step-card" id="fs-card-2">
+      <div class="step-header">
+        <div class="step-num">2</div>
+        <div class="step-info">
+          <div class="step-title">Feature importance ranking</div>
+          <div class="step-desc">Use Random Forest to rank all features by importance score</div>
+        </div>
+        <button class="btn step-btn" onclick="applyFS(2)">Apply</button>
+      </div>
+      <div class="step-result" id="fs-result-2"></div>
+    </div>
+
+    <div class="step-card" id="fs-card-3">
+      <div class="step-header">
+        <div class="step-num">3</div>
+        <div class="step-info">
+          <div class="step-title">SelectKBest</div>
+          <div class="step-desc">Keep top K most statistically significant features using f_classif</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <input type="number" id="fs-k-val" value="15" min="5" max="30"
+            style="width:60px;padding:6px;border:1px solid #dde3ea;border-radius:6px;font-size:13px">
+          <button class="btn step-btn" onclick="applyFS(3)">Apply</button>
+        </div>
+      </div>
+      <div class="step-result" id="fs-result-3"></div>
+    </div>
+
+    <div class="step-card" id="fs-card-4">
+      <div class="step-header">
+        <div class="step-num">4</div>
+        <div class="step-info">
+          <div class="step-title">Manual drop</div>
+          <div class="step-desc">Select specific features to remove from the final set</div>
+        </div>
+        <button class="btn step-btn" onclick="applyFS(4)">Apply</button>
+      </div>
+      <div class="step-result" id="fs-result-4">
+        <div style="padding:12px 0">
+          <div id="fs-manual-checklist" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px">
+            <span style="color:#888;font-size:13px">Load FE data first to see features</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="card" id="fs-final-card" style="margin-top:16px;display:none">
+    <h3>Final selected features</h3>
+    <div id="fs-final-tags"></div>
+  </div>
+
+</div><!-- end phase-fs -->
+<!-- ═══════════ PHASE: MODEL TRAINING ═══════════ -->
+<div id="phase-model" class="phase">
+
+  <!-- Step 1: Split -->
+  <div class="card">
+    <h3>Step 1 — Train / Test split</h3>
+    <div class="controls">
+      <label style="font-size:13px;color:#555">Test size:</label>
+      <select id="split-ratio">
+        <option value="0.2">80% train / 20% test</option>
+        <option value="0.3">70% train / 30% test</option>
+        <option value="0.25">75% train / 25% test</option>
+      </select>
+      <button class="btn" onclick="doSplit()">Split data</button>
+    </div>
+    <div id="split-result" style="display:none">
+      <div class="metric-row" style="margin-top:14px">
+        <div class="metric">
+          <div class="metric-label">Total rows</div>
+          <div class="metric-val" id="spl-total">—</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Training rows</div>
+          <div class="metric-val" id="spl-train">—</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Test rows</div>
+          <div class="metric-val" id="spl-test">—</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Features</div>
+          <div class="metric-val" id="spl-feats">—</div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px">
+        <div class="card" style="background:#f8fafc">
+          <div style="font-size:12px;font-weight:600;color:#888;
+                      text-transform:uppercase;margin-bottom:8px">
+            Train set class distribution
+          </div>
+          <div id="spl-train-dist"></div>
+        </div>
+        <div class="card" style="background:#f8fafc">
+          <div style="font-size:12px;font-weight:600;color:#888;
+                      text-transform:uppercase;margin-bottom:8px">
+            Test set class distribution
+          </div>
+          <div id="spl-test-dist"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 2: Model selection -->
+  <div class="card">
+    <h3>Step 2 — Select models to train</h3>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:4px">
+      <label class="model-check">
+        <input type="checkbox" value="logistic_regression" checked>
+        Logistic Regression
+      </label>
+      <label class="model-check">
+        <input type="checkbox" value="decision_tree" checked>
+        Decision Tree
+      </label>
+      <label class="model-check">
+        <input type="checkbox" value="random_forest" checked>
+        Random Forest
+      </label>
+      <label class="model-check">
+        <input type="checkbox" value="xgboost">
+        XGBoost
+      </label>
+    </div>
+    <div class="insight" style="margin-top:10px">
+      XGBoost requires separate installation:
+      <code>pip install xgboost</code>
+    </div>
+  </div>
+
+  <!-- Step 3: Train -->
+  <div class="card">
+    <h3>Step 3 — Train models</h3>
+    <button class="btn" onclick="trainAllModels()" id="train-btn">
+      Train selected models
+    </button>
+    <div id="training-progress" style="margin-top:16px"></div>
+  </div>
+
+  <!-- Step 4: Compare results -->
+  <div class="card" id="results-card" style="display:none">
+    <h3>Step 4 — Compare results</h3>
+    <table id="results-table" style="margin-bottom:16px">
+      <thead>
+        <tr>
+          <th>Model</th>
+          <th>Train acc</th>
+          <th>Test acc</th>
+          <th>F1</th>
+          <th>Precision</th>
+          <th>Recall</th>
+          <th>ROC-AUC</th>
+          <th>Time (s)</th>
+        </tr>
+      </thead>
+      <tbody id="results-tbody"></tbody>
+    </table>
+    <div style="position:relative;width:100%;height:300px">
+      <canvas id="results-chart"></canvas>
+    </div>
+  </div>
+
+</div><!-- end phase-model -->
+
+  <!-- ═══════════ PHASE: EVALUATION ═══════════ -->
+<div id="phase-eval" class="phase">
+
+  <!-- Model selector -->
+  <div class="card">
+    <h3>Select model to evaluate</h3>
+    <div class="controls">
+      <select id="eval-model-select"></select>
+      <button class="btn" onclick="runEvaluation()">Evaluate</button>
+    </div>
+  </div>
+
+  <!-- Results hidden until evaluated -->
+  <div id="eval-results" style="display:none">
+
+    <!-- Metric summary cards -->
+    <div class="metric-row" id="eval-metric-row">
+      <div class="metric">
+        <div class="metric-label">Accuracy</div>
+        <div class="metric-val" id="ev-acc">—</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">F1 Score</div>
+        <div class="metric-val" id="ev-f1">—</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">ROC-AUC</div>
+        <div class="metric-val" id="ev-auc">—</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Recall</div>
+        <div class="metric-val" id="ev-recall">—</div>
+      </div>
+    </div>
+
+    <!-- Confusion matrix + ROC curve side by side -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+
+      <div class="card">
+        <h3>Confusion matrix</h3>
+        <div id="cm-grid" style="display:grid;grid-template-columns:1fr 1fr;
+             gap:10px;margin-top:10px"></div>
+        <div id="cm-legend" style="margin-top:12px;font-size:12px;color:#888"></div>
+      </div>
+
+      <div class="card">
+        <h3>ROC curve</h3>
+        <div style="position:relative;width:100%;height:260px">
+          <canvas id="roc-canvas"></canvas>
+        </div>
+        <div id="roc-auc-label" style="text-align:center;font-size:13px;
+             color:#185FA5;margin-top:6px;font-weight:500"></div>
+      </div>
+
+    </div>
+
+    <!-- Classification report -->
+    <div class="card">
+      <h3>Classification report</h3>
+      <table id="clf-report-table">
+        <thead>
+          <tr>
+            <th>Class</th>
+            <th>Precision</th>
+            <th>Recall</th>
+            <th>F1 Score</th>
+            <th>Support</th>
+          </tr>
+        </thead>
+        <tbody id="clf-report-body"></tbody>
+      </table>
+    </div>
+
+    <!-- Overfitting check -->
+    <div class="card">
+      <h3>Overfitting check</h3>
+      <div id="overfit-display"></div>
+    </div>
+
+    <!-- Feature importance -->
+    <div class="card" id="feat-imp-card">
+      <h3>Feature importance</h3>
+      <div style="position:relative;width:100%;height:360px">
+        <canvas id="feat-imp-canvas"></canvas>
+      </div>
+    </div>
+
+  </div>
+</div><!-- end phase-eval -->
 </div><!-- end container -->
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 <script src="{{ url_for('static', filename='js/preprocess.js') }}"></script>
 <script src="{{ url_for('static', filename='js/feature_eng.js') }}"></script>
+<script src="{{ url_for('static', filename='js/feature_select.js') }}"></script>
+<script src="{{ url_for('static', filename='js/model.js') }}"></script>
+<script src="{{ url_for('static', filename='js/evaluator.js') }}"></script>
 
 </body>
 </html>

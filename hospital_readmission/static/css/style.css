@@ -663,3 +663,73 @@ tbody tr:hover {
 }
 
 .tag-green { background: #EAF3DE; color: #3B6D11; }
+
+.model-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.model-check:hover {
+  border-color: #185FA5;
+  background: #E6F1FB;
+}
+
+.model-check input { cursor: pointer; }
+
+.train-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  font-size: 13px;
+}
+
+.train-row .model-name {
+  font-weight: 500;
+  min-width: 160px;
+}
+
+.train-row .train-status {
+  font-size: 12px;
+  color: #888;
+  flex: 1;
+}
+
+.train-row.done {
+  border-color: #97C459;
+  background: #f4fbee;
+}
+
+.train-row.done .train-status {
+  color: #3B6D11;
+}
+
+.train-row.running .train-status {
+  color: #185FA5;
+}
+
+.best-row {
+  background: #EAF3DE !important;
+  border-color: #639922 !important;
+  font-weight: 500;
+}
+
+code {
+  background: #f0f4f8;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 12px;
+  color: #185FA5;
+}

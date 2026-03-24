@@ -21,6 +21,19 @@ from modules.feature_engineer import (
     fe_step5_diagnosis_count, fe_step6_drop_low_value
 )
 
+# ⭐ NEW: Feature selection imports
+from modules.feature_selector import (
+    init_fs, get_fs_state, get_final_features,
+    fs_step1_correlation_filter, fs_step2_importance_ranking,
+    fs_step3_select_k_best, fs_step4_manual_drop, get_fs_df
+)
+
+from modules.model import (
+    split_data, train_model,
+    get_all_results, get_best_model, get_model_state
+)
+
+from modules.evaluator import get_available_models, evaluate_model
 app = Flask(__name__)
 
 # Load dataset
@@ -138,6 +151,103 @@ def fe5(): return jsonify(fe_step5_diagnosis_count())
 
 @app.route("/api/fe/step/6", methods=["POST"])
 def fe6(): return jsonify(fe_step6_drop_low_value())
+
+# Feature Selection
+@app.route("/api/fs/init", methods=["POST"])
+def fs_init():
+    return jsonify(init_fs())
+
+@app.route("/api/fs/state")
+def fs_state():
+    return jsonify(get_fs_state())
+
+@app.route("/api/fs/features")
+def fs_features():
+    return jsonify({"features": get_final_features()})
+
+@app.route("/api/fs/step/1", methods=["POST"])
+def fss1(): return jsonify(fs_step1_correlation_filter())
+
+@app.route("/api/fs/correlation")
+def fs_correlation():
+    from modules.feature_selector import get_fs_df
+    import numpy as np
+    df = get_fs_df()
+    if df is None:
+        return jsonify({"columns": [], "matrix": []})
+    numeric = df.select_dtypes(include=np.number)
+    if "readmitted" in numeric.columns:
+        numeric = numeric.drop(columns=["readmitted"])
+    corr = numeric.corr().round(3)
+    return jsonify({
+        "columns": list(corr.columns),
+        "matrix": corr.values.tolist()
+    })
+
+@app.route("/api/fs/importance")
+def fs_importance():
+    from modules.feature_selector import get_fs_df
+    from sklearn.ensemble import RandomForestClassifier
+    import numpy as np
+    df = get_fs_df()
+    if df is None or "readmitted" not in df.columns:
+        return jsonify({"features": [], "importances": []})
+    X = df.drop(columns=["readmitted"]).select_dtypes(include=np.number)
+    y = df["readmitted"]
+    rf = RandomForestClassifier(n_estimators=50, random_state=42, n_jobs=-1)
+    rf.fit(X, y)
+    import pandas as pd
+    imp = pd.Series(rf.feature_importances_, index=X.columns).sort_values(ascending=False)
+    return jsonify({
+        "features": list(imp.index),
+        "importances": [round(float(v), 4) for v in imp.values]
+    })
+
+@app.route("/api/fs/step/2", methods=["POST"])
+def fss2(): return jsonify(fs_step2_importance_ranking())
+
+@app.route("/api/fs/step/3", methods=["POST"])
+def fss3():
+    k = int(request.args.get("k", 15))
+    return jsonify(fs_step3_select_k_best(k))
+
+@app.route("/api/fs/step/4", methods=["POST"])
+def fss4():
+    cols = request.json.get("cols", [])
+    return jsonify(fs_step4_manual_drop(cols))
+
+# Model Training
+@app.route("/api/model/state")
+def model_state():
+    return jsonify(get_model_state())
+
+@app.route("/api/model/split", methods=["POST"])
+def model_split():
+    test_size = float(request.json.get("test_size", 0.2))
+    return jsonify(split_data(test_size))
+
+@app.route("/api/model/train/<model_key>", methods=["POST"])
+def model_train(model_key):
+    return jsonify(train_model(model_key))
+
+@app.route("/api/model/results")
+def model_results():
+    return jsonify(get_all_results())
+
+@app.route("/api/model/best")
+def model_best():
+    return jsonify(get_best_model())
+
+
+# Evaluation
+@app.route("/api/eval/models")
+def eval_models():
+    return jsonify(get_available_models())
+
+@app.route("/api/eval/<model_key>")
+def eval_model(model_key):
+    return jsonify(evaluate_model(model_key))
+
 # ── Run App ────────────────────────────────────────────────────────────
 if __name__ == "__main__":
     app.run(debug=True, use_reloader=False)

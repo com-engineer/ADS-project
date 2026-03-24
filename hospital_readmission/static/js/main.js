@@ -21,13 +21,17 @@ function showPhase(phaseId, btn) {
   const subnavMap = {
     'phase-eda':        'subnav-eda',
     'phase-preprocess': 'subnav-preprocess',
-    'phase-fe':         null
+    'phase-fe':         null,
+    'phase-fs':         null,
+    'phase-model':      null,
+    'phase-eval':       null
   };
 
   const subnavId = subnavMap[phaseId];
   if (subnavId) document.getElementById(subnavId).style.display = 'flex';
 
   if (phaseId === 'phase-preprocess') refreshPipelineStatus();
+  if (phaseId === 'phase-eval') loadEvalModels();
 }
 
 /* ── Tab switching (within EDA) ── */
