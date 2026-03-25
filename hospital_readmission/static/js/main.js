@@ -24,7 +24,8 @@ function showPhase(phaseId, btn) {
     'phase-fe':         null,
     'phase-fs':         null,
     'phase-model':      null,
-    'phase-eval':       null
+    'phase-eval':       null,
+    'phase-predict':    null
   };
 
   const subnavId = subnavMap[phaseId];
@@ -32,6 +33,7 @@ function showPhase(phaseId, btn) {
 
   if (phaseId === 'phase-preprocess') refreshPipelineStatus();
   if (phaseId === 'phase-eval') loadEvalModels();
+  if (phaseId === 'phase-predict') loadPredictionPhase();
 }
 
 /* ── Tab switching (within EDA) ── */

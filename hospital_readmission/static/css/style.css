@@ -733,3 +733,94 @@ code {
   font-size: 12px;
   color: #185FA5;
 }
+
+/* ── Prediction form ── */
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.input-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #555;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.form-input {
+  padding: 8px 12px;
+  border: 1px solid #dde3ea;
+  border-radius: 8px;
+  font-size: 13px;
+  background: white;
+  color: #333;
+  transition: border-color 0.15s;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: #185FA5;
+}
+
+.input-hint {
+  font-size: 11px;
+  color: #aaa;
+}
+
+/* ── Risk result box ── */
+.risk-box {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 20px;
+  border-radius: 10px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.risk-box.high   { background: #FCEBEB; border: 2px solid #E24B4A; }
+.risk-box.medium { background: #FAEEDA; border: 2px solid #EF9F27; }
+.risk-box.low    { background: #EAF3DE; border: 2px solid #639922; }
+
+.risk-label {
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.risk-box.high   .risk-label { color: #A32D2D; }
+.risk-box.medium .risk-label { color: #854F0B; }
+.risk-box.low    .risk-label { color: #3B6D11; }
+
+.risk-prob {
+  font-size: 42px;
+  font-weight: 700;
+}
+
+.risk-box.high   .risk-prob { color: #A32D2D; }
+.risk-box.medium .risk-prob { color: #854F0B; }
+.risk-box.low    .risk-prob { color: #3B6D11; }
+
+.risk-desc {
+  font-size: 13px;
+  color: #666;
+  max-width: 300px;
+  line-height: 1.6;
+}
+
+/* ── Probability bar ── */
+.prob-bar-wrap {
+  background: #e2e8f0;
+  border-radius: 20px;
+  height: 10px;
+  width: 100%;
+  margin: 10px 0;
+  overflow: hidden;
+}
+
+.prob-bar {
+  height: 10px;
+  border-radius: 20px;
+  transition: width 0.6s ease;
+}

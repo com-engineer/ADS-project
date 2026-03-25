@@ -34,6 +34,12 @@ from modules.model import (
 )
 
 from modules.evaluator import get_available_models, evaluate_model
+
+from modules.predictor import (
+    get_best_model_info, get_input_features,
+    predict, get_prediction_history
+)
+
 app = Flask(__name__)
 
 # Load dataset
@@ -248,6 +254,25 @@ def eval_models():
 def eval_model(model_key):
     return jsonify(evaluate_model(model_key))
 
+# Prediction
+@app.route("/api/predict/best")
+def predict_best():
+    return jsonify(get_best_model_info())
+
+@app.route("/api/predict/features")
+def predict_features():
+    return jsonify(get_input_features())
+
+@app.route("/api/predict/run", methods=["POST"])
+def predict_run():
+    data      = request.json
+    model_key = data.get("model_key")
+    inputs    = data.get("inputs", {})
+    return jsonify(predict(model_key, inputs))
+
+@app.route("/api/predict/history")
+def predict_history():
+    return jsonify(get_prediction_history())
 # ── Run App ────────────────────────────────────────────────────────────
 if __name__ == "__main__":
     app.run(debug=True, use_reloader=False)
