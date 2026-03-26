@@ -699,7 +699,7 @@
 
   </div>
 </div><!-- end phase-eval -->
-  <!-- ═══════════ PHASE: PREDICTION ═══════════ -->
+ <!-- ═══════════ PHASE: PREDICTION ═══════════ -->
 <div id="phase-predict" class="phase">
 
   <!-- Best model info -->
@@ -712,197 +712,263 @@
 
   <!-- Input form -->
   <div class="card">
-  <h3>Patient details</h3>
-  <div style="font-size:13px;color:#888;margin-bottom:16px">
-    Enter the patient's clinical information.
-    Engineered features are calculated automatically.
-  </div>
-
-  <!-- Section 1: Demographics -->
-  <div style="font-size:12px;font-weight:600;color:#185FA5;
-              text-transform:uppercase;letter-spacing:0.4px;
-              margin-bottom:10px;padding-bottom:6px;
-              border-bottom:2px solid #E6F1FB">
-    Demographics
-  </div>
-  <div style="display:grid;grid-template-columns:repeat(3,1fr);
-              gap:14px;margin-bottom:20px">
-
-    <div class="input-group">
-      <label class="input-label">Age group</label>
-      <select id="inp-age" class="form-input">
-        <option value="0">[0-10)</option>
-        <option value="1">[10-20)</option>
-        <option value="2">[20-30)</option>
-        <option value="3">[30-40)</option>
-        <option value="4">[40-50)</option>
-        <option value="5" selected>[50-60)</option>
-        <option value="6">[60-70)</option>
-        <option value="7">[70-80)</option>
-        <option value="8">[80-90)</option>
-        <option value="9">[90-100)</option>
-      </select>
+    <h3>Patient details</h3>
+    <div style="font-size:13px;color:#888;margin-bottom:16px">
+      Enter the patient's clinical information.
+      Engineered features are calculated automatically.
     </div>
 
-    <div class="input-group">
-      <label class="input-label">Gender</label>
-      <select id="inp-gender" class="form-input">
-        <option value="Female">Female</option>
-        <option value="Male">Male</option>
-      </select>
+    <!-- Section 1: Demographics -->
+    <div style="font-size:12px;font-weight:600;color:#185FA5;
+                text-transform:uppercase;letter-spacing:0.4px;
+                margin-bottom:10px;padding-bottom:6px;
+                border-bottom:2px solid #E6F1FB">
+      Demographics
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);
+                gap:14px;margin-bottom:20px">
+
+      <div class="input-group">
+        <label class="input-label">Age group</label>
+        <select id="inp-age" class="form-input" onchange="updateLivePreview()">
+          <option value="0">[0-10)</option>
+          <option value="1">[10-20)</option>
+          <option value="2">[20-30)</option>
+          <option value="3">[30-40)</option>
+          <option value="4">[40-50)</option>
+          <option value="5" selected>[50-60)</option>
+          <option value="6">[60-70)</option>
+          <option value="7">[70-80)</option>
+          <option value="8">[80-90)</option>
+          <option value="9">[90-100)</option>
+        </select>
+      </div>
+
+      <div class="input-group">
+        <label class="input-label">Gender</label>
+        <select id="inp-gender" class="form-input" onchange="updateLivePreview()">
+          <option value="Female">Female</option>
+          <option value="Male">Male</option>
+        </select>
+      </div>
+
+      <div class="input-group">
+        <label class="input-label">Race</label>
+        <select id="inp-race" class="form-input" onchange="updateLivePreview()">
+          <option value="Caucasian">Caucasian</option>
+          <option value="AfricanAmerican">African American</option>
+          <option value="Hispanic">Hispanic</option>
+          <option value="Asian">Asian</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+
     </div>
 
-    <div class="input-group">
-      <label class="input-label">Race</label>
-      <select id="inp-race" class="form-input">
-        <option value="Caucasian">Caucasian</option>
-        <option value="AfricanAmerican">African American</option>
-        <option value="Hispanic">Hispanic</option>
-        <option value="Asian">Asian</option>
-        <option value="Other">Other</option>
-      </select>
+    <!-- Section 2: Hospital stay -->
+    <div style="font-size:12px;font-weight:600;color:#185FA5;
+                text-transform:uppercase;letter-spacing:0.4px;
+                margin-bottom:10px;padding-bottom:6px;
+                border-bottom:2px solid #E6F1FB">
+      Hospital stay
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);
+                gap:14px;margin-bottom:20px">
+
+      <div class="input-group">
+        <label class="input-label">Time in hospital (days)</label>
+        <input type="number" id="inp-time" min="1" max="14"
+               value="4" class="form-input" oninput="updateLivePreview()">
+      </div>
+
+      <div class="input-group">
+        <label class="input-label">Num lab procedures</label>
+        <input type="number" id="inp-lab" min="1" max="132"
+               value="40" class="form-input" oninput="updateLivePreview()">
+      </div>
+
+      <div class="input-group">
+        <label class="input-label">Num procedures</label>
+        <input type="number" id="inp-proc" min="0" max="6"
+               value="1" class="form-input" oninput="updateLivePreview()">
+      </div>
+
+      <div class="input-group">
+        <label class="input-label">Num medications</label>
+        <input type="number" id="inp-meds" min="1" max="81"
+               value="15" class="form-input" oninput="updateLivePreview()">
+      </div>
+
+      <div class="input-group">
+        <label class="input-label">Number of diagnoses</label>
+        <input type="number" id="inp-numdiag" min="1" max="16"
+               value="7" class="form-input" oninput="updateLivePreview()">
+      </div>
+
+      <div class="input-group">
+        <label class="input-label">Max glucose serum</label>
+        <select id="inp-glucose" class="form-input" onchange="updateLivePreview()">
+          <option value="None">None / Not tested</option>
+          <option value="Norm">Normal</option>
+          <option value=">200">&gt;200</option>
+          <option value=">300">&gt;300</option>
+        </select>
+      </div>
+
     </div>
 
-  </div>
+    <!-- Section 3: Visit history -->
+    <div style="font-size:12px;font-weight:600;color:#185FA5;
+                text-transform:uppercase;letter-spacing:0.4px;
+                margin-bottom:10px;padding-bottom:6px;
+                border-bottom:2px solid #E6F1FB">
+      Visit history
+      <span style="font-size:11px;color:#888;font-weight:400;
+                   text-transform:none;margin-left:6px">
+        (used to calculate total visits &amp; high utilizer flag)
+      </span>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);
+                gap:14px;margin-bottom:20px">
 
-  <!-- Section 2: Hospital stay -->
-  <div style="font-size:12px;font-weight:600;color:#185FA5;
-              text-transform:uppercase;letter-spacing:0.4px;
-              margin-bottom:10px;padding-bottom:6px;
-              border-bottom:2px solid #E6F1FB">
-    Hospital stay
-  </div>
-  <div style="display:grid;grid-template-columns:repeat(3,1fr);
-              gap:14px;margin-bottom:20px">
+      <div class="input-group">
+        <label class="input-label">Inpatient visits (past year)</label>
+        <input type="number" id="inp-inpat" min="0" max="20"
+               value="0" class="form-input" oninput="updateLivePreview()">
+      </div>
 
-    <div class="input-group">
-      <label class="input-label">Time in hospital (days)</label>
-      <input type="number" id="inp-time" min="1" max="14"
-             value="4" class="form-input">
+      <div class="input-group">
+        <label class="input-label">Outpatient visits (past year)</label>
+        <input type="number" id="inp-outpat" min="0" max="40"
+               value="0" class="form-input" oninput="updateLivePreview()">
+      </div>
+
+      <div class="input-group">
+        <label class="input-label">Emergency visits (past year)</label>
+        <input type="number" id="inp-emerg" min="0" max="76"
+               value="0" class="form-input" oninput="updateLivePreview()">
+      </div>
+
     </div>
 
-    <div class="input-group">
-      <label class="input-label">Num lab procedures</label>
-      <input type="number" id="inp-lab" min="1" max="132"
-             value="40" class="form-input">
+    <!-- Section 4: Diagnosis codes -->
+    <div style="font-size:12px;font-weight:600;color:#185FA5;
+                text-transform:uppercase;letter-spacing:0.4px;
+                margin-bottom:10px;padding-bottom:6px;
+                border-bottom:2px solid #E6F1FB">
+      Diagnosis codes
+      <span style="font-size:11px;color:#888;font-weight:400;
+                   text-transform:none;margin-left:6px">
+        (used to calculate diagnosis count)
+      </span>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);
+                gap:14px;margin-bottom:24px">
+
+      <div class="input-group">
+        <label class="input-label">Primary diagnosis (diag_1)</label>
+        <input type="number" id="inp-diag1" min="0" value="250"
+               class="form-input" placeholder="ICD code e.g. 250"
+               oninput="updateLivePreview()">
+        <span class="input-hint">0 = not recorded</span>
+      </div>
+
+      <div class="input-group">
+        <label class="input-label">Secondary diagnosis (diag_2)</label>
+        <input type="number" id="inp-diag2" min="0" value="0"
+               class="form-input" placeholder="ICD code e.g. 401"
+               oninput="updateLivePreview()">
+        <span class="input-hint">0 = not recorded</span>
+      </div>
+
+      <div class="input-group">
+        <label class="input-label">Tertiary diagnosis (diag_3)</label>
+        <input type="number" id="inp-diag3" min="0" value="0"
+               class="form-input" placeholder="ICD code e.g. 276"
+               oninput="updateLivePreview()">
+        <span class="input-hint">0 = not recorded</span>
+      </div>
+
     </div>
 
-    <div class="input-group">
-      <label class="input-label">Num procedures</label>
-      <input type="number" id="inp-proc" min="0" max="6"
-             value="1" class="form-input">
+    <!-- Live preview of engineered features -->
+    <div style="background:#EEF5FC;border-radius:8px;padding:14px;
+                margin-bottom:20px;border:1px solid #B5D4F4">
+      <div style="font-size:12px;font-weight:600;color:#185FA5;
+                  text-transform:uppercase;letter-spacing:0.4px;
+                  margin-bottom:12px">
+        Auto-calculated engineered features
+        <span style="font-size:11px;font-weight:400;color:#888;
+                     text-transform:none;margin-left:8px">
+          updates as you fill the form
+        </span>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px">
+
+        <div style="background:white;border-radius:6px;padding:10px;
+                    border:1px solid #e2e8f0;text-align:center">
+          <div style="font-size:10px;color:#888;text-transform:uppercase;
+                      margin-bottom:4px">Total visits</div>
+          <div style="font-size:24px;font-weight:700;color:#185FA5"
+               id="live-total-visits">0</div>
+          <div style="font-size:10px;color:#aaa;margin-top:2px">
+            inpat + outpat + emerg
+          </div>
+        </div>
+
+        <div style="background:white;border-radius:6px;padding:10px;
+                    border:1px solid #e2e8f0;text-align:center">
+          <div style="font-size:10px;color:#888;text-transform:uppercase;
+                      margin-bottom:4px">Age risk</div>
+          <div style="font-size:24px;font-weight:700;color:#185FA5"
+               id="live-age-risk">4</div>
+          <div style="font-size:10px;color:#aaa;margin-top:2px">
+            scale 1 (low) – 5 (high)
+          </div>
+        </div>
+
+        <div style="background:white;border-radius:6px;padding:10px;
+                    border:1px solid #e2e8f0;text-align:center">
+          <div style="font-size:10px;color:#888;text-transform:uppercase;
+                      margin-bottom:4px">Glucose risk</div>
+          <div style="font-size:24px;font-weight:700;color:#185FA5"
+               id="live-glucose-risk">0</div>
+          <div style="font-size:10px;color:#aaa;margin-top:2px">
+            0=none 1=norm 2=&gt;200 3=&gt;300
+          </div>
+        </div>
+
+        <div style="background:white;border-radius:6px;padding:10px;
+                    border:1px solid #e2e8f0;text-align:center">
+          <div style="font-size:10px;color:#888;text-transform:uppercase;
+                      margin-bottom:4px">High utilizer</div>
+          <div style="font-size:24px;font-weight:700;color:#185FA5"
+               id="live-high-utilizer">No</div>
+          <div style="font-size:10px;color:#aaa;margin-top:2px">
+            total visits &gt; 3
+          </div>
+        </div>
+
+        <div style="background:white;border-radius:6px;padding:10px;
+                    border:1px solid #e2e8f0;text-align:center">
+          <div style="font-size:10px;color:#888;text-transform:uppercase;
+                      margin-bottom:4px">Diagnosis count</div>
+          <div style="font-size:24px;font-weight:700;color:#185FA5"
+               id="live-diag-count">1</div>
+          <div style="font-size:10px;color:#aaa;margin-top:2px">
+            non-zero diag codes
+          </div>
+        </div>
+
+      </div>
     </div>
-
-    <div class="input-group">
-      <label class="input-label">Num medications</label>
-      <input type="number" id="inp-meds" min="1" max="81"
-             value="15" class="form-input">
-    </div>
-
-    <div class="input-group">
-      <label class="input-label">Number of diagnoses</label>
-      <input type="number" id="inp-numdiag" min="1" max="16"
-             value="7" class="form-input">
-    </div>
-
-    <div class="input-group">
-      <label class="input-label">Max glucose serum</label>
-      <select id="inp-glucose" class="form-input">
-        <option value="None">None / Not tested</option>
-        <option value="Norm">Normal</option>
-        <option value=">200">&gt;200</option>
-        <option value=">300">&gt;300</option>
-      </select>
-    </div>
-
-  </div>
-
-  <!-- Section 3: Visit history (used for total_visits + is_high_utilizer) -->
-  <div style="font-size:12px;font-weight:600;color:#185FA5;
-              text-transform:uppercase;letter-spacing:0.4px;
-              margin-bottom:10px;padding-bottom:6px;
-              border-bottom:2px solid #E6F1FB">
-    Visit history
-    <span style="font-size:11px;color:#888;font-weight:400;
-                 text-transform:none;margin-left:6px">
-      (used to calculate total visits & high utilizer flag)
-    </span>
-  </div>
-  <div style="display:grid;grid-template-columns:repeat(3,1fr);
-              gap:14px;margin-bottom:20px">
-
-    <div class="input-group">
-      <label class="input-label">Inpatient visits (past year)</label>
-      <input type="number" id="inp-inpat" min="0" max="20"
-             value="0" class="form-input">
-    </div>
-
-    <div class="input-group">
-      <label class="input-label">Outpatient visits (past year)</label>
-      <input type="number" id="inp-outpat" min="0" max="40"
-             value="0" class="form-input">
-    </div>
-
-    <div class="input-group">
-      <label class="input-label">Emergency visits (past year)</label>
-      <input type="number" id="inp-emerg" min="0" max="76"
-             value="0" class="form-input">
-    </div>
-
-  </div>
-
-  <!-- Section 4: Diagnoses (used for diagnosis_count) -->
-  <div style="font-size:12px;font-weight:600;color:#185FA5;
-              text-transform:uppercase;letter-spacing:0.4px;
-              margin-bottom:10px;padding-bottom:6px;
-              border-bottom:2px solid #E6F1FB">
-    Diagnosis codes
-    <span style="font-size:11px;color:#888;font-weight:400;
-                 text-transform:none;margin-left:6px">
-      (used to calculate diagnosis count)
-    </span>
-  </div>
-  <div style="display:grid;grid-template-columns:repeat(3,1fr);
-              gap:14px;margin-bottom:24px">
-
-    <div class="input-group">
-      <label class="input-label">Primary diagnosis (diag_1)</label>
-      <input type="number" id="inp-diag1" min="0" value="250"
-             class="form-input" placeholder="ICD code e.g. 250">
-      <span class="input-hint">0 = not recorded</span>
-    </div>
-
-    <div class="input-group">
-      <label class="input-label">Secondary diagnosis (diag_2)</label>
-      <input type="number" id="inp-diag2" min="0" value="0"
-             class="form-input" placeholder="ICD code e.g. 401">
-      <span class="input-hint">0 = not recorded</span>
-    </div>
-
-    <div class="input-group">
-      <label class="input-label">Tertiary diagnosis (diag_3)</label>
-      <input type="number" id="inp-diag3" min="0" value="0"
-             class="form-input" placeholder="ICD code e.g. 276">
-      <span class="input-hint">0 = not recorded</span>
-    </div>
-
-  </div>
-
-  <button class="btn" style="padding:10px 32px;font-size:14px"
-          onclick="runPrediction()">
-    Predict readmission risk
-  </button>
-</div>
-
-    <!-- Dynamic inputs for remaining features -->
-    <div id="dynamic-inputs" style="display:grid;
-         grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:16px"></div>
 
     <button class="btn" style="padding:10px 32px;font-size:14px"
             onclick="runPrediction()">
       Predict readmission risk
     </button>
-  </div>
+
+  </div><!-- end input form card -->
 
   <!-- Prediction result -->
   <div id="pred-result" style="display:none">

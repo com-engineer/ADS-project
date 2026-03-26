@@ -111,7 +111,10 @@ def step3_encode_target():
 
     if "readmitted" in df.columns:
         before_dist = df["readmitted"].value_counts().to_dict()
-        df["readmitted"] = (df["readmitted"] == "<30").astype(int)
+        # df["readmitted"] = (df["readmitted"] == "<30").astype(int)
+        df["readmitted"] = df["readmitted"].apply(
+        lambda x: 0 if x == "NO" else 1
+        )
         after_dist = df["readmitted"].value_counts().to_dict()
     else:
         before_dist, after_dist = {}, {}
@@ -127,7 +130,8 @@ def step3_encode_target():
         "detail": {
             "before_dist": {str(k): int(v) for k, v in before_dist.items()},
             "after_dist":  {str(k): int(v) for k, v in after_dist.items()},
-            "mapping": {"<30": 1, ">30": 0, "NO": 0}
+            # "mapping": {"<30": 1, ">30": 0, "NO": 0}
+            "mapping": {"NO": 0, ">30": 1, "<30": 1}
         }
     }
 
@@ -218,45 +222,102 @@ def step6_scale_features():
     }
 
 
-# ── Step 7 : Handle class imbalance (undersample majority) ─────────────────
 def step7_handle_imbalance():
     df = _pipeline["current"].copy()
     before = _snapshot(df)
 
     if "readmitted" not in df.columns:
-        return {"error": "Target column not found"}
+        return {"error": "Target column not found. Run step 3 first."}
+
+    df["readmitted"] = pd.to_numeric(df["readmitted"], errors="coerce")
+    df = df.dropna(subset=["readmitted"])
+    df["readmitted"] = df["readmitted"].astype(int)
 
     vc = df["readmitted"].value_counts()
-    before_dist = {str(k): int(v) for k, v in vc.items()}
+    if len(vc) < 2:
+        return {"error": "Need at least 2 classes in target column."}
 
+    before_dist    = {str(k): int(v) for k, v in vc.items()}
     minority_count = int(vc.min())
-    majority_class = int(vc.idxmax())
-    minority_class = int(vc.idxmin())
+    majority_count = int(vc.max())
 
-    df_maj = df[df["readmitted"] == majority_class].sample(
-        n=minority_count * 2, random_state=42
-    )
-    df_min = df[df["readmitted"] == minority_class]
-    df = pd.concat([df_maj, df_min]).sample(frac=1, random_state=42).reset_index(drop=True)
+    try:
+        from imblearn.over_sampling import SMOTE
 
-    after_dist = {str(k): int(v) for k, v in df["readmitted"].value_counts().items()}
+        X = df.drop(columns=["readmitted"])
+        y = df["readmitted"]
 
-    _pipeline["current"] = df
-    _pipeline["step"] = max(_pipeline["step"], 7)
+        # only use numeric columns for SMOTE
+        X_numeric = X.select_dtypes(include=np.number)
 
-    return {
-        "step": 7,
-        "title": "Handle class imbalance",
-        "before": before,
-        "after": _snapshot(df),
-        "detail": {
-            "strategy": "Undersample majority class (2:1 ratio)",
-            "before_dist": before_dist,
-            "after_dist": after_dist
+        sm = SMOTE(random_state=42)
+        X_res, y_res = sm.fit_resample(X_numeric, y)
+
+        df_res = pd.DataFrame(X_res, columns=X_numeric.columns)
+        df_res["readmitted"] = y_res.values
+
+        after_dist = {
+            str(k): int(v)
+            for k, v in df_res["readmitted"].value_counts().items()
         }
-    }
 
+        _pipeline["current"] = df_res.reset_index(drop=True)
+        _pipeline["step"]    = max(_pipeline["step"], 7)
 
+        return {
+            "step":  7,
+            "title": "Handle class imbalance (SMOTE)",
+            "before": before,
+            "after":  _snapshot(df_res),
+            "detail": {
+                "strategy":    "SMOTE — synthetic minority oversampling",
+                "before_dist": before_dist,
+                "after_dist":  after_dist,
+                "note": (
+                    f"Rows went from {before['rows']:,} to "
+                    f"{len(df_res):,} — minority class "
+                    f"synthetically increased from "
+                    f"{minority_count:,} to "
+                    f"{after_dist.get(str(1), after_dist.get('1',0)):,}"
+                )
+            }
+        }
+
+    except ImportError:
+        # fallback to safe undersampling if imblearn not installed
+        safe_size = min(minority_count * 2, majority_count)
+        majority_class = int(vc.idxmax())
+        minority_class = int(vc.idxmin())
+
+        df_maj = df[df["readmitted"] == majority_class].sample(
+            n=safe_size, random_state=42
+        )
+        df_min = df[df["readmitted"] == minority_class]
+        df_res = pd.concat([df_maj, df_min]).sample(
+            frac=1, random_state=42
+        ).reset_index(drop=True)
+
+        after_dist = {
+            str(k): int(v)
+            for k, v in df_res["readmitted"].value_counts().items()
+        }
+
+        _pipeline["current"] = df_res
+        _pipeline["step"]    = max(_pipeline["step"], 7)
+
+        return {
+            "step":  7,
+            "title": "Handle class imbalance (undersampling)",
+            "before": before,
+            "after":  _snapshot(df_res),
+            "detail": {
+                "strategy":    "Undersampling (install imbalanced-learn for SMOTE)",
+                "before_dist": before_dist,
+                "after_dist":  after_dist,
+                "note": "pip install imbalanced-learn to use SMOTE instead"
+            }
+        }
+    
 def get_processed_df():
     return _pipeline["current"]
 
